@@ -2,6 +2,7 @@ import numpy as np
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
+from modules.activation import TanhExp
 device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 
 
@@ -48,17 +49,17 @@ class LocalizationNetwork(nn.Module):
         self.I_channel_num = I_channel_num
         self.conv = nn.Sequential(
             nn.Conv2d(in_channels=self.I_channel_num, out_channels=64, kernel_size=3, stride=1, padding=1,
-                      bias=False), nn.BatchNorm2d(64), nn.ReLU(True),
+                      bias=False), nn.BatchNorm2d(64), TanhExp(),
             nn.MaxPool2d(2, 2),  # batch_size x 64 x I_height/2 x I_width/2
-            nn.Conv2d(64, 128, 3, 1, 1, bias=False), nn.BatchNorm2d(128), nn.ReLU(True),
+            nn.Conv2d(64, 128, 3, 1, 1, bias=False), nn.BatchNorm2d(128), TanhExp(),
             nn.MaxPool2d(2, 2),  # batch_size x 128 x I_height/4 x I_width/4
-            nn.Conv2d(128, 256, 3, 1, 1, bias=False), nn.BatchNorm2d(256), nn.ReLU(True),
+            nn.Conv2d(128, 256, 3, 1, 1, bias=False), nn.BatchNorm2d(256), TanhExp(),
             nn.MaxPool2d(2, 2),  # batch_size x 256 x I_height/8 x I_width/8
-            nn.Conv2d(256, 512, 3, 1, 1, bias=False), nn.BatchNorm2d(512), nn.ReLU(True),
+            nn.Conv2d(256, 512, 3, 1, 1, bias=False), nn.BatchNorm2d(512), TanhExp(),
             nn.AdaptiveAvgPool2d(1)  # batch_size x 512
         )
 
-        self.localization_fc1 = nn.Sequential(nn.Linear(512, 256), nn.ReLU(True))
+        self.localization_fc1 = nn.Sequential(nn.Linear(512, 256), TanhExp())
         self.localization_fc2 = nn.Linear(256, self.F * 2)
 
         # Init fc2 in LocalizationNetwork

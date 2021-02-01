@@ -216,12 +216,10 @@ class LmdbDataset(Dataset):
         
         if self.opt.data_augment:
             imgArray = np.asarray(img)
-            if torch.rand(1) < 0.3:
+            if torch.rand(1) < 0.4:
                 imgArray = augment.distort(imgArray, random.randint(3, 8))
-            if torch.rand(1) < 0.3:
+            if torch.rand(1) < 0.4:
                 imgArray = augment.stretch(imgArray, random.randint(3, 8))
-            if torch.rand(1) < 0.3:
-                imgArray = augment.perspective(imgArray)
             img = Image.fromarray(np.uint8(imgArray))
 
         return (img, label)

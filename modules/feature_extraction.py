@@ -1,6 +1,6 @@
 import torch.nn as nn
 import torch.nn.functional as F
-
+from modules.activation import TanhExp
 
 class VGG_FeatureExtractor(nn.Module):
     """ FeatureExtractor of CRNN (https://arxiv.org/pdf/1507.05717.pdf) """
@@ -123,7 +123,7 @@ class BasicBlock(nn.Module):
         self.bn1 = nn.BatchNorm2d(planes)
         self.conv2 = self._conv3x3(planes, planes)
         self.bn2 = nn.BatchNorm2d(planes)
-        self.relu = nn.ReLU(inplace=True)
+        self.relu = TanhExp()
         self.downsample = downsample
         self.stride = stride
 
@@ -164,7 +164,7 @@ class ResNet(nn.Module):
         self.conv0_2 = nn.Conv2d(int(output_channel / 16), self.inplanes,
                                  kernel_size=3, stride=1, padding=1, bias=False)
         self.bn0_2 = nn.BatchNorm2d(self.inplanes)
-        self.relu = nn.ReLU(inplace=True)
+        self.relu = TanhExp()
 
         self.maxpool1 = nn.MaxPool2d(kernel_size=2, stride=2, padding=0)
         self.layer1 = self._make_layer(block, self.output_channel_block[0], layers[0])
