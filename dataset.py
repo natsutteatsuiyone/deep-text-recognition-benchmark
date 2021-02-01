@@ -5,6 +5,7 @@ import six
 import math
 import lmdb
 import torch
+import random
 
 from natsort import natsorted
 from PIL import Image
@@ -12,7 +13,7 @@ import numpy as np
 from torch.utils.data import Dataset, ConcatDataset, Subset
 from torch._utils import _accumulate
 import torchvision.transforms as transforms
-
+import augment
 
 class Batch_Balanced_Dataset(object):
 
@@ -212,6 +213,16 @@ class LmdbDataset(Dataset):
             # We only train and evaluate on alphanumerics (or pre-defined character set in train.py)
             out_of_char = f'[^{self.opt.character}]'
             label = re.sub(out_of_char, '', label)
+        
+        if self.opt.data_augment:
+            imgArray = np.asarray(img)
+            if torch.rand(1) < 0.3:
+                imgArray = augment.distort(imgArray, random.randint(3, 8))
+            if torch.rand(1) < 0.3:
+                imgArray = augment.stretch(imgArray, random.randint(3, 8))
+            if torch.rand(1) < 0.3:
+                imgArray = augment.perspective(imgArray)
+            img = Image.fromarray(np.uint8(imgArray))
 
         return (img, label)
 
