@@ -131,7 +131,7 @@ def train(opt):
 
     # setup optimizer
     if opt.adam:
-        optimizer = optimizer.RAdam(filtered_parameters)
+        optimizer = RAdam(filtered_parameters)
     else:
         optimizer = optim.Adadelta(filtered_parameters, lr=opt.lr, rho=opt.rho, eps=opt.eps)
 
