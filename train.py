@@ -12,7 +12,7 @@ import torch.optim as optim
 import torch.utils.data
 import numpy as np
 
-from optimizer import AdaBelief
+from optimizer import RAdam
 from utils import CTCLabelConverter, CTCLabelConverterForBaiduWarpctc, AttnLabelConverter, Averager
 from dataset import hierarchical_dataset, AlignCollate, Batch_Balanced_Dataset
 from model import Model
@@ -112,7 +112,7 @@ def train(opt):
 
     # setup optimizer
     if opt.adam:
-        optimizer = AdaBelief(filtered_parameters, weight_decay=1e-2, weight_decouple=True)
+        optimizer = RAdam(filtered_parameters)
     else:
         optimizer = optim.Adadelta(filtered_parameters, lr=opt.lr, rho=opt.rho, eps=opt.eps)
     print("Optimizer:")
