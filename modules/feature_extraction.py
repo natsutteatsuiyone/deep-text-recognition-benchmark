@@ -1,6 +1,6 @@
 import torch.nn as nn
 import torch.nn.functional as F
-from modules.activation import TanhExp
+from modules.activation import FReLU
 
 class VGG_FeatureExtractor(nn.Module):
     """ FeatureExtractor of CRNN (https://arxiv.org/pdf/1507.05717.pdf) """
@@ -161,36 +161,43 @@ class ResNet(nn.Module):
         self.conv0_1 = nn.Conv2d(input_channel, int(output_channel / 16),
                                  kernel_size=3, stride=1, padding=1, bias=False)
         self.bn0_1 = nn.BatchNorm2d(int(output_channel / 16))
+        self.relu0_1 = FReLU(int(output_channel / 16))
+
         self.conv0_2 = nn.Conv2d(int(output_channel / 16), self.inplanes,
                                  kernel_size=3, stride=1, padding=1, bias=False)
         self.bn0_2 = nn.BatchNorm2d(self.inplanes)
-        self.relu = TanhExp()
+        self.relu0_2 = FReLU(self.inplanes)
 
         self.maxpool1 = nn.MaxPool2d(kernel_size=2, stride=2, padding=0)
         self.layer1 = self._make_layer(block, self.output_channel_block[0], layers[0])
         self.conv1 = nn.Conv2d(self.output_channel_block[0], self.output_channel_block[
                                0], kernel_size=3, stride=1, padding=1, bias=False)
         self.bn1 = nn.BatchNorm2d(self.output_channel_block[0])
+        self.relu1 = FReLU(self.output_channel_block[0])
 
         self.maxpool2 = nn.MaxPool2d(kernel_size=2, stride=2, padding=0)
         self.layer2 = self._make_layer(block, self.output_channel_block[1], layers[1], stride=1)
         self.conv2 = nn.Conv2d(self.output_channel_block[1], self.output_channel_block[
                                1], kernel_size=3, stride=1, padding=1, bias=False)
         self.bn2 = nn.BatchNorm2d(self.output_channel_block[1])
+        self.relu2 = FReLU(self.output_channel_block[1])
 
         self.maxpool3 = nn.MaxPool2d(kernel_size=2, stride=(2, 1), padding=(0, 1))
         self.layer3 = self._make_layer(block, self.output_channel_block[2], layers[2], stride=1)
         self.conv3 = nn.Conv2d(self.output_channel_block[2], self.output_channel_block[
                                2], kernel_size=3, stride=1, padding=1, bias=False)
         self.bn3 = nn.BatchNorm2d(self.output_channel_block[2])
+        self.relu3 = FReLU(self.output_channel_block[2])
 
         self.layer4 = self._make_layer(block, self.output_channel_block[3], layers[3], stride=1)
         self.conv4_1 = nn.Conv2d(self.output_channel_block[3], self.output_channel_block[
                                  3], kernel_size=2, stride=(2, 1), padding=(0, 1), bias=False)
         self.bn4_1 = nn.BatchNorm2d(self.output_channel_block[3])
+        self.relu4_1 = FReLU(self.output_channel_block[3])
         self.conv4_2 = nn.Conv2d(self.output_channel_block[3], self.output_channel_block[
                                  3], kernel_size=2, stride=1, padding=0, bias=False)
         self.bn4_2 = nn.BatchNorm2d(self.output_channel_block[3])
+        self.relu4_2 = FReLU(self.output_channel_block[3])
 
     def _make_layer(self, block, planes, blocks, stride=1):
         downsample = None
@@ -212,35 +219,35 @@ class ResNet(nn.Module):
     def forward(self, x):
         x = self.conv0_1(x)
         x = self.bn0_1(x)
-        x = self.relu(x)
+        x = self.relu0_1(x)
         x = self.conv0_2(x)
         x = self.bn0_2(x)
-        x = self.relu(x)
+        x = self.relu0_2(x)
 
         x = self.maxpool1(x)
         x = self.layer1(x)
         x = self.conv1(x)
         x = self.bn1(x)
-        x = self.relu(x)
+        x = self.relu1(x)
 
         x = self.maxpool2(x)
         x = self.layer2(x)
         x = self.conv2(x)
         x = self.bn2(x)
-        x = self.relu(x)
+        x = self.relu2(x)
 
         x = self.maxpool3(x)
         x = self.layer3(x)
         x = self.conv3(x)
         x = self.bn3(x)
-        x = self.relu(x)
+        x = self.relu3(x)
 
         x = self.layer4(x)
         x = self.conv4_1(x)
         x = self.bn4_1(x)
-        x = self.relu(x)
+        x = self.relu4_1(x)
         x = self.conv4_2(x)
         x = self.bn4_2(x)
-        x = self.relu(x)
+        x = self.relu4_2(x)
 
         return x
