@@ -123,7 +123,7 @@ class BasicBlock(nn.Module):
         self.bn1 = nn.BatchNorm2d(planes)
         self.conv2 = self._conv3x3(planes, planes)
         self.bn2 = nn.BatchNorm2d(planes)
-        self.relu = TanhExp()
+        self.relu = FReLU(planes)
         self.downsample = downsample
         self.stride = stride
 
