@@ -13,7 +13,7 @@ import torch.utils.data
 import numpy as np
 
 from optimizer import RAdam
-from utils import CTCLabelConverter, CTCLabelConverterForBaiduWarpctc, AttnLabelConverter, Averager
+from utils import CTCLabelConverter, CTCLabelConverterForBaiduWarpctc, AttnLabelConverter, Averager, TransLabelConverter
 from dataset import hierarchical_dataset, AlignCollate, Batch_Balanced_Dataset
 from model import Model
 from test import validation
@@ -50,6 +50,8 @@ def train(opt):
             converter = CTCLabelConverterForBaiduWarpctc(opt.character)
         else:
             converter = CTCLabelConverter(opt.character)
+    elif 'Transformer' in opt.Prediction:
+        converter = TransLabelConverter(opt.character, device)
     else:
         converter = AttnLabelConverter(opt.character)
     opt.num_class = len(converter.character)
@@ -96,6 +98,8 @@ def train(opt):
             criterion = CTCLoss()
         else:
             criterion = torch.nn.CTCLoss(zero_infinity=True).to(device)
+    elif 'Transformer' in opt.Prediction:
+        criterion = torch.nn.CrossEntropyLoss().to(device)
     else:
         criterion = torch.nn.CrossEntropyLoss(ignore_index=0).to(device)  # ignore [GO] token = ignore index 0
     # loss averager
@@ -161,7 +165,9 @@ def train(opt):
             else:
                 preds = preds.log_softmax(2).permute(1, 0, 2)
                 cost = criterion(preds, text, preds_size, length)
-
+        elif 'Transformer' in opt.Prediction:
+            preds = model(image, text)
+            cost = criterion(preds.view(-1, preds.shape[-1]), text.contiguous().view(-1))
         else:
             preds = model(image, text[:, :-1])  # align with Attention.forward
             target = text[:, 1:]  # without [GO] Symbol
@@ -212,6 +218,9 @@ def train(opt):
                     if 'Attn' in opt.Prediction:
                         gt = gt[:gt.find('[s]')]
                         pred = pred[:pred.find('[s]')]
+                    elif 'Transformer' in opt.Prediction:
+                        gt = gt[:gt.find('<eos>')]
+                        pred = pred[:pred.find('<eos>')]
 
                     predicted_result_log += f'{gt:25s} | {pred:25s} | {confidence:0.4f}\t{str(pred == gt)}\n'
                 predicted_result_log += f'{dashed_line}'
@@ -270,7 +279,7 @@ if __name__ == '__main__':
     parser.add_argument('--FeatureExtraction', type=str, required=True,
                         help='FeatureExtraction stage. VGG|RCNN|ResNet')
     parser.add_argument('--SequenceModeling', type=str, required=True, help='SequenceModeling stage. None|BiLSTM')
-    parser.add_argument('--Prediction', type=str, required=True, help='Prediction stage. CTC|Attn')
+    parser.add_argument('--Prediction', type=str, required=True, help='Prediction stage. CTC|Attn|Transformer')
     parser.add_argument('--num_fiducial', type=int, default=20, help='number of fiducial points of TPS-STN')
     parser.add_argument('--input_channel', type=int, default=1,
                         help='the number of input channel of Feature extractor')

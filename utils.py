@@ -167,3 +167,31 @@ class Averager(object):
         if self.n_count != 0:
             res = self.sum / float(self.n_count)
         return res
+
+class TransLabelConverter(object):
+    """ Convert between text-label and text-index """
+    def __init__(self, character, device):
+        self.device = device
+        list_token = ['<eos>']
+        self.character = list_token + list(character)
+
+        self.dict = {}
+        for i, char in enumerate(self.character):
+            self.dict[char] = i
+
+    def encode(self, text, batch_max_length=25):
+        length = [len(s) + 1 for s in text]
+        batch_text = torch.LongTensor(len(text), batch_max_length + 1).fill_(0)
+        for i, t in enumerate(text):
+            text = list(t)
+            text.append('<eos>')
+            text = [self.dict[char] for char in text]
+            batch_text[i][:len(text)] = torch.LongTensor(text)
+        return batch_text.to(self.device), torch.IntTensor(length).to(self.device)
+
+    def decode(self, text_index, length):
+        texts = []
+        for index, l in enumerate(length):
+            text = ''.join([self.character[i] for i in text_index[index, :]])
+            texts.append(text)
+        return texts

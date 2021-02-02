@@ -116,6 +116,16 @@ def validation(model, criterion, evaluation_loader, converter, opt):
             else:
                 _, preds_index = preds.max(2)
             preds_str = converter.decode(preds_index.data, preds_size.data)
+
+        elif 'Transformer' in opt.Prediction:
+            preds = model(image, text_for_pred)
+            forward_time = time.time() - start_time    
+            
+            cost = criterion(preds.contiguous().view(-1, preds.shape[-1]), text_for_loss.contiguous().view(-1))
+            # select max probabilty (greedy decoding) then decode index to character
+            _, preds_index = preds.max(2)
+            preds_str = converter.decode(preds_index, length_for_pred)
+            labels = converter.decode(text_for_loss, length_for_loss)
         
         else:
             preds = model(image, text_for_pred, is_train=False)
@@ -142,6 +152,11 @@ def validation(model, criterion, evaluation_loader, converter, opt):
                 gt = gt[:gt.find('[s]')]
                 pred_EOS = pred.find('[s]')
                 pred = pred[:pred_EOS]  # prune after "end of sentence" token ([s])
+                pred_max_prob = pred_max_prob[:pred_EOS]
+            elif 'Transformer' in opt.Prediction:
+                gt = gt[:gt.find('<eos>')]
+                pred_EOS = pred.find('<eos>')
+                pred = pred[:pred_EOS]
                 pred_max_prob = pred_max_prob[:pred_EOS]
 
             # To evaluate 'case sensitive model' with alphanumeric and case insensitve setting.

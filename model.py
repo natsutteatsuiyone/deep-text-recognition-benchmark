@@ -19,7 +19,7 @@ import torch.nn as nn
 from modules.transformation import TPS_SpatialTransformerNetwork
 from modules.feature_extraction import VGG_FeatureExtractor, RCNN_FeatureExtractor, ResNet_FeatureExtractor
 from modules.sequence_modeling import BidirectionalLSTM
-from modules.prediction import Attention
+from modules.prediction import Attention, Transformer
 
 
 class Model(nn.Module):
@@ -64,6 +64,8 @@ class Model(nn.Module):
             self.Prediction = nn.Linear(self.SequenceModeling_output, opt.num_class)
         elif opt.Prediction == 'Attn':
             self.Prediction = Attention(self.SequenceModeling_output, opt.hidden_size, opt.num_class)
+        elif opt.Prediction == 'Transformer':
+            self.Prediction = Transformer(opt.num_class, self.SequenceModeling_output)
         else:
             raise Exception('Prediction is neither CTC or Attn')
 
@@ -84,7 +86,7 @@ class Model(nn.Module):
             contextual_feature = visual_feature  # for convenience. this is NOT contextually modeled by BiLSTM
 
         """ Prediction stage """
-        if self.stages['Pred'] == 'CTC':
+        if self.stages['Pred'] == 'CTC' or self.stages['Pred'] == 'Transformer':
             prediction = self.Prediction(contextual_feature.contiguous())
         else:
             prediction = self.Prediction(contextual_feature.contiguous(), text, is_train, batch_max_length=self.opt.batch_max_length)
