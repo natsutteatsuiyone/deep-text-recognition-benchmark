@@ -64,19 +64,34 @@ def train(opt):
           opt.SequenceModeling, opt.Prediction)
 
     # weight initialization
-    for name, param in model.named_parameters():
-        if 'localization_fc2' in name:
-            print(f'Skip {name} as it is already initialized')
-            continue
-        try:
-            if 'bias' in name:
-                init.constant_(param, 0.0)
-            elif 'weight' in name:
-                init.kaiming_normal_(param)
-        except Exception as e:  # for batchnorm.
-            if 'weight' in name:
-                param.data.fill_(1)
-            continue
+    if opt.Prediction == 'Transformer':
+        for name, param in model.named_parameters():
+            if 'localization_fc2' in name or 'decoder' in name or 'self_attn' in name:
+                print(f'Skip {name} as it is already initialized')
+                continue
+            try:
+                if 'bias' in name:
+                    init.constant_(param, 0.0)
+                elif 'weight' in name:
+                    init.xavier_normal_(param)
+            except:  # for batchnorm.
+                if 'weight' in name:
+                    param.data.fill_(1)
+                continue
+    else:
+        for name, param in model.named_parameters():
+            if 'localization_fc2' in name:
+                print(f'Skip {name} as it is already initialized')
+                continue
+            try:
+                if 'bias' in name:
+                    init.constant_(param, 0.0)
+                elif 'weight' in name:
+                    init.kaiming_normal_(param)
+            except Exception as e:  # for batchnorm.
+                if 'weight' in name:
+                    param.data.fill_(1)
+                continue
 
     # data parallel for multi-GPU
     model = torch.nn.DataParallel(model).to(device)
@@ -116,7 +131,7 @@ def train(opt):
 
     # setup optimizer
     if opt.adam:
-        optimizer = optim.SGD(filtered_parameters, lr=0.01, momentum=0.90)
+        optimizer = optimizer.RAdam(filtered_parameters)
     else:
         optimizer = optim.Adadelta(filtered_parameters, lr=opt.lr, rho=opt.rho, eps=opt.eps)
 
