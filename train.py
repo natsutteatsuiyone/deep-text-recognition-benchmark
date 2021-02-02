@@ -115,6 +115,8 @@ def train(opt):
         optimizer = optim.SGD(filtered_parameters, lr=0.01, momentum=0.90)
     else:
         optimizer = optim.Adadelta(filtered_parameters, lr=opt.lr, rho=opt.rho, eps=opt.eps)
+
+    scheduler = optim.lr_scheduler.ReduceLROnPlateau(optimizer, 'min', verbose=True)
     print("Optimizer:")
     print(optimizer)
 
@@ -215,6 +217,7 @@ def train(opt):
                 predicted_result_log += f'{dashed_line}'
                 print(predicted_result_log)
                 log.write(predicted_result_log + '\n')
+                scheduler.step(valid_loss)
 
         # save model per 1e+5 iter.
         if (iteration + 1) % 1e+5 == 0:
