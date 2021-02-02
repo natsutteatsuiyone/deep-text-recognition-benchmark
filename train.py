@@ -112,7 +112,7 @@ def train(opt):
 
     # setup optimizer
     if opt.adam:
-        optimizer = RAdam(filtered_parameters)
+        optimizer = optim.SGD(filtered_parameters, lr=0.01, momentum=0.90)
     else:
         optimizer = optim.Adadelta(filtered_parameters, lr=opt.lr, rho=opt.rho, eps=opt.eps)
     print("Optimizer:")
